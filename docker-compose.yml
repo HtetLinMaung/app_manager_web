@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  appmanagerweb:
+    image: htetlinmaung/appmanagerweb
+    build: .
+    ports:
+      - "8080:3000"
+    volumes:
+      - ./:/app
