@@ -40,6 +40,7 @@ export default function Application({ appref }) {
   const [ref, setRef] = useState(appref);
   const [name, setName] = useState("");
   const [version, setVersion] = useState("");
+  const [newVersion, setNewVersion] = useState("");
   const [git, setGit] = useState("");
   const [containerPort, setContainerPort] = useState("");
   const [exposePort, setExposePort] = useState("");
@@ -161,6 +162,9 @@ export default function Application({ appref }) {
   }, []);
 
   const handleSave = async () => {
+    if (state.loading) {
+      return false;
+    }
     const bodyEnvironments = {};
     for (const { key, value } of environments) {
       if (key && value) {
@@ -203,6 +207,9 @@ export default function Application({ appref }) {
   };
 
   const handleUpdate = async () => {
+    if (state.loading) {
+      return false;
+    }
     const bodyEnvironments = {};
     for (const { key, value } of environments) {
       if (key && value) {
@@ -235,14 +242,18 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    console.log(response.data.message);
+
     await Swal.fire({
       icon: "success",
       text: response.data.message,
     });
+    fetchData();
   };
 
   const handleDelete = async () => {
+    if (state.loading) {
+      return false;
+    }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.delete(`${domain}/applications/${ref}`, {
       headers: {
@@ -265,12 +276,16 @@ export default function Application({ appref }) {
   };
 
   const handleAction = async (action) => {
+    setNewVersion("");
+    if (state.loading) {
+      return false;
+    }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(
       `${domain}/applications/${ref}/${action}`,
       {
         params: {
-          version,
+          version: action == "deploy" ? newVersion : version,
         },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -288,6 +303,9 @@ export default function Application({ appref }) {
       icon: "success",
       text: response.data.message,
     });
+    if (action == "deploy") {
+      fetchData();
+    }
   };
 
   return (
@@ -439,6 +457,9 @@ export default function Application({ appref }) {
             {ref == "new" ? null : (
               <div className="p-1">
                 <button
+                  onClick={() => {
+                    handleAction("start");
+                  }}
                   className="btn text-white w-36 rounded-3xl"
                   style={{
                     textTransform: "none",
@@ -453,6 +474,9 @@ export default function Application({ appref }) {
             {ref == "new" ? null : (
               <div className="p-1">
                 <button
+                  onClick={() => {
+                    handleAction("stop");
+                  }}
                   className="btn text-white w-36 rounded-3xl"
                   style={{
                     textTransform: "none",
@@ -461,6 +485,23 @@ export default function Application({ appref }) {
                   }}
                 >
                   Stop
+                </button>
+              </div>
+            )}
+            {ref == "new" ? null : (
+              <div className="p-1">
+                <button
+                  onClick={() => {
+                    handleAction("restart");
+                  }}
+                  className="btn text-white w-36 rounded-3xl"
+                  style={{
+                    textTransform: "none",
+                    background: "#0285FF",
+                    borderColor: "#0285FF",
+                  }}
+                >
+                  Restart
                 </button>
               </div>
             )}
@@ -477,8 +518,13 @@ export default function Application({ appref }) {
                       <div className="mb-2" style={{ fontSize: 14 }}>
                         Version
                       </div>
-
-                      <select
+                      <input
+                        value={newVersion}
+                        onChange={(e) => setNewVersion(e.target.value)}
+                        type="text"
+                        className="input input-bordered w-full rounded-xl"
+                      />
+                      {/* <select
                         value={version}
                         onChange={(e) => setVersion(e.target.value)}
                         className="select select-bordered w-full outline-none rounded-xl"
@@ -489,11 +535,14 @@ export default function Application({ appref }) {
                             {v.label}
                           </option>
                         ))}
-                      </select>
+                      </select> */}
                     </div>
                     <div className="modal-action justify-between">
                       <div className="p-1">
                         <label
+                          onClick={() => {
+                            setNewVersion("");
+                          }}
                           htmlFor="deploy-modal"
                           className="btn btn-outline w-28 rounded-3xl"
                           style={{
