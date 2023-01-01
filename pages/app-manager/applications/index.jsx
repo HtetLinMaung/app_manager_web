@@ -93,6 +93,7 @@ export default function Application() {
       params: {
         ...pagination,
         search,
+        populate: "deployment",
       },
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -147,8 +148,6 @@ export default function Application() {
     setSortModal(false);
     fetchTableData();
   };
-
-  const handleEdit = () => {};
 
   const handleDelete = () => {};
 
@@ -351,10 +350,23 @@ export default function Application() {
         onPaginationChange={setPagination}
         headers={tableHeaders}
         items={tableData}
-        onEditClick={handleEdit}
-        onDeleteClick={handleDelete}
+        hideAction
         totalCounts={totalCounts}
         countLabel="Application"
+        colStyles={{
+          ref: {
+            cursor: "pointer",
+            textDecoration: "underline",
+            color: "#0285ff",
+          },
+        }}
+        colEvents={{
+          ref: {
+            onClick: (e, item) => {
+              router.push(`/app-manager/applications/${item.ref}`);
+            },
+          },
+        }}
       ></Table>
     </div>
   );
