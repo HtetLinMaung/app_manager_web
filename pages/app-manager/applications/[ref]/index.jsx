@@ -133,11 +133,6 @@ export default function Application({ appref }) {
       });
     }
     setDeployments([
-      {
-        key: "-",
-        value: "-",
-        label: "-",
-      },
       ...response.data.data.map((d) => ({
         key: d._id,
         value: d._id,
@@ -216,7 +211,7 @@ export default function Application({ appref }) {
       setGit("");
       setExposePort("");
       setContainerPort("");
-      setDeployment("-");
+      setDeployment("");
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
@@ -245,7 +240,7 @@ export default function Application({ appref }) {
         version,
         git,
         port: `${exposePort}:${containerPort}`,
-        deployment: deployment == "-" ? null : deployment,
+        deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -293,7 +288,7 @@ export default function Application({ appref }) {
         name,
         git,
         port: `${exposePort}:${containerPort}`,
-        deployment: deployment == "-" ? null : deployment,
+        deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
