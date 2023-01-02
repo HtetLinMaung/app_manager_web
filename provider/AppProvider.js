@@ -4,6 +4,7 @@ export const appContext = createContext(null);
 
 const map = {
   Application: [],
+  Container: [],
   Database: [],
 };
 

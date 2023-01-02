@@ -21,7 +21,7 @@ const defaultVolumes = [
   },
 ];
 
-export default function Application({ appref }) {
+export default function Container({ cid }) {
   const [state, dispatch] = useContext(appContext);
   const router = useRouter();
   const [bItems, setBItems] = useState([
@@ -30,40 +30,33 @@ export default function Application({ appref }) {
       to: "/app-manager",
     },
     {
-      label: "Application",
-      to: "/app-manager/applications",
+      label: "Container",
+      to: "/app-manager/containers",
     },
     {
-      label: "New Application",
-      to: `/app-manager/applications/${appref}`,
+      label: "New Container",
+      to: `/app-manager/containers/${cid}`,
     },
   ]);
-  const [ref, setRef] = useState(appref);
   const [name, setName] = useState("");
-  const [version, setVersion] = useState("");
-  const [newVersion, setNewVersion] = useState("");
-  const [git, setGit] = useState("");
   const [containerPort, setContainerPort] = useState("");
   const [exposePort, setExposePort] = useState("");
-  const [deployment, setDeployment] = useState("");
   const [environments, setEnvironments] = useState(defaultEnvironments);
   const [volumes, setVolumes] = useState(defaultVolumes);
   const [network, setNetwork] = useState("");
   const [status, setStatus] = useState("new");
-  const [deployments, setDeployments] = useState([]);
-  const [versions, setVersions] = useState([]);
   const [activeMenu, setActiveMenu] = useState("overview");
   const [logs, setLogs] = useState("");
+  const [image, setImage] = useState("");
+  const [tag, setTag] = useState("");
+  const [id, setId] = useState(cid);
 
   const fetchLogs = async () => {
-    const [response, err] = await http.get(
-      `${domain}/applications/${ref}/logs`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
+    const [response, err] = await http.get(`${domain}/containers/${id}/logs`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
 
     if (err || response.status != 200) {
       if (response.status == 401) {
@@ -86,63 +79,27 @@ export default function Application({ appref }) {
       dispatch({
         type: "SET_LOG_ID",
         payload: {
-          application: setInterval(() => {
+          container: setInterval(() => {
             fetchLogs();
           }, 5000),
         },
       });
     } else {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
+      if (state.logIds["container"]) {
+        clearInterval(state.logIds["container"]);
       }
     }
     return () => {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
+      if (state.logIds["container"]) {
+        clearInterval(state.logIds["container"]);
       }
     };
   }, [activeMenu]);
 
-  const fetchDeployments = async () => {
-    dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.get(`${domain}/deployments`, {
-      params: {
-        projection: JSON.stringify({
-          name: 1,
-          version: 1,
-        }),
-      },
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-    dispatch({ type: "SET_STATE", payload: { loading: false } });
-    if (err || response.status != 200) {
-      if (response.status == 401) {
-        localStorage.setItem("token", "");
-        return router.push("/app-manager/login");
-      }
-      return Swal.fire({
-        icon: "error",
-        text: response.data ? response.data.message : "Something went wrong!",
-      });
-    }
-    setDeployments([
-      ...response.data.data.map((d) => ({
-        key: d._id,
-        value: d._id,
-        label: `${d.name} (${d.version})`,
-      })),
-    ]);
-    if (response.data.data.length) {
-      setDeployment(response.data.data[0]._id);
-    }
-  };
-
-  const fetchData = async (r = null) => {
+  const fetchData = async (_id = null) => {
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(
-      `${domain}/applications/${r || appref}`,
+      `${domain}/containers/${_id || id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -160,27 +117,27 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    const { ref, name, version, git, deployment } = response.data.data;
-    const { port, volumes, environments, status, network } =
-      response.data.container;
-    setRef(ref);
+    const { name, image, tag, port, volumes, environments, status, network } =
+      response.data.data;
+
+    setId(response.data.data._id);
     setBItems([
       {
         label: "Dashboard",
         to: "/app-manager",
       },
       {
-        label: "Application",
-        to: "/app-manager/applications",
+        label: "Container",
+        to: "/app-manager/containers",
       },
       {
-        label: name,
-        to: `/app-manager/applications/${ref}`,
+        label: response.data.data._id,
+        to: `/app-manager/containers/${response.data.data._id}`,
       },
     ]);
     setName(name);
-    setVersion(version);
-    setGit(git);
+    setImage(image);
+    setTag(tag);
     if (port) {
       const ports = port.split(":");
       if (ports.length > 1) {
@@ -189,7 +146,6 @@ export default function Application({ appref }) {
       }
     }
 
-    setDeployment(deployment);
     setVolumes(
       volumes.length
         ? volumes
@@ -207,42 +163,39 @@ export default function Application({ appref }) {
     );
     setStatus(status);
     setNetwork(network);
-    setVersions(response.data.versions);
   };
 
   useEffect(() => {
-    fetchDeployments();
-    if (ref != "new") {
+    if (id != "new") {
       fetchData();
     } else {
-      setRef(appref);
+      setId(cid);
       setBItems([
         {
           label: "Dashboard",
           to: "/app-manager",
         },
         {
-          label: "Application",
-          to: "/app-manager/applications",
+          label: "Container",
+          to: "/app-manager/containers",
         },
         {
-          label: "New Application",
-          to: `/app-manager/applications/${appref}`,
+          label: "New Container",
+          to: `/app-manager/containers/${cid}`,
         },
       ]);
       setName("");
-      setVersion("");
-      setGit("");
+      setImage("");
+      setTag("");
       setExposePort("");
       setContainerPort("");
-      setDeployment("");
       setNetwork("");
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
     return () => {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
+      if (state.logIds["container"]) {
+        clearInterval(state.logIds["container"]);
       }
     };
   }, []);
@@ -259,13 +212,12 @@ export default function Application({ appref }) {
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.post(
-      `${domain}/applications`,
+      `${domain}/containers`,
       {
         name,
-        version,
-        git,
+        image,
+        tag,
         port: `${exposePort}:${containerPort}`,
-        deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -293,9 +245,8 @@ export default function Application({ appref }) {
       icon: "success",
       text: response.data.message,
     });
-    setRef(response.data.data.ref);
-    await handleAction("deploy", response.data.data.ref, version);
-    router.push(`/app-manager/applications/${response.data.data.ref}`);
+    setId(response.data.data._id);
+    router.push(`/app-manager/containers/${response.data.data._id}`);
   };
 
   const handleUpdate = async () => {
@@ -310,12 +261,12 @@ export default function Application({ appref }) {
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.put(
-      `${domain}/applications/${ref}`,
+      `${domain}/containers/${id}`,
       {
         name,
-        git,
+        image,
+        tag,
         port: `${exposePort}:${containerPort}`,
-        deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -344,7 +295,7 @@ export default function Application({ appref }) {
       icon: "success",
       text: response.data.message,
     });
-    fetchData(ref);
+    fetchData(id);
   };
 
   const handleDelete = async () => {
@@ -352,7 +303,7 @@ export default function Application({ appref }) {
       return false;
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.delete(`${domain}/applications/${ref}`, {
+    const [response, err] = await http.delete(`${domain}/containers/${id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -373,21 +324,17 @@ export default function Application({ appref }) {
       icon: "success",
       text: response.data.message,
     });
-    router.push("/app-manager/applications");
+    router.push("/app-manager/containers");
   };
 
-  const handleAction = async (action, r = null, v = null) => {
-    setNewVersion("");
+  const handleAction = async (action, _id = null) => {
     if (state.loading) {
       return false;
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(
-      `${domain}/applications/${r || ref}/${action}`,
+      `${domain}/containers/${_id || id}/${action}`,
       {
-        params: {
-          version: v || version,
-        },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -409,7 +356,7 @@ export default function Application({ appref }) {
       text: response.data.message,
     });
 
-    fetchData(r);
+    fetchData(_id);
   };
 
   const getStatusColor = (status) => {
@@ -445,22 +392,7 @@ export default function Application({ appref }) {
           >
             Overview
           </button>
-          {ref == "new" ? null : (
-            <button
-              onClick={() => setActiveMenu("version")}
-              className="btn w-28"
-              style={{
-                borderRadius: "2rem",
-                textTransform: "none",
-                background: activeMenu == "version" ? "#0285FF" : "#ffffff",
-                borderColor: activeMenu == "version" ? "#0285FF" : "#ffffff",
-                color: activeMenu == "version" ? "#ffffff" : "#000000",
-              }}
-            >
-              Versions
-            </button>
-          )}
-          {ref == "new" ? null : (
+          {id == "new" ? null : (
             <button
               onClick={() => setActiveMenu("log")}
               className="btn w-28"
@@ -477,27 +409,6 @@ export default function Application({ appref }) {
           )}
         </div>
         <div className="flex">
-          {versions.length ? (
-            <div className="px-1">
-              <select
-                value={version}
-                onChange={(e) => {
-                  setVersion(e.target.value);
-
-                  handleAction("change-version", ref, e.target.value);
-                }}
-                className="select w-full outline-none rounded-xl shadow-lg"
-                style={{ fontSize: 14, borderWidth: 1 }}
-              >
-                {versions.map((v) => (
-                  <option key={v._id} value={v.version}>
-                    {v.version}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-
           <div
             className=" text-white flex items-center rounded-xl shadow-lg justify-center w-32 ml-3"
             style={{ background: getStatusColor(status) }}
@@ -510,60 +421,10 @@ export default function Application({ appref }) {
         {activeMenu == "overview" ? (
           <div className="card-body">
             <div className="flex mb-3">
-              {ref == "new" ? (
+              {id == "new" ? (
                 <div className="p-1">
-                  <input
-                    type="checkbox"
-                    id="save-modal"
-                    className="modal-toggle"
-                  />
-                  <div className="modal">
-                    <div className="modal-box">
-                      <div className="p-2">
-                        <div className="mb-2" style={{ fontSize: 14 }}>
-                          Version
-                        </div>
-                        <input
-                          value={version}
-                          onChange={(e) => setVersion(e.target.value)}
-                          type="text"
-                          className="input input-bordered w-full rounded-xl"
-                        />
-                      </div>
-                      <div className="modal-action justify-between">
-                        <div className="p-1">
-                          <label
-                            htmlFor="save-modal"
-                            className="btn btn-outline w-28 rounded-3xl"
-                            style={{
-                              textTransform: "none",
-                              // background: "#02b602",
-                              // borderColor: "#02b602",
-                            }}
-                          >
-                            Cancel
-                          </label>
-                        </div>
-                        <div className="p-1">
-                          <label
-                            onClick={handleSave}
-                            htmlFor="save-modal"
-                            className="btn text-white w-28 rounded-3xl"
-                            style={{
-                              textTransform: "none",
-                              background: "#02b602",
-                              borderColor: "#02b602",
-                            }}
-                          >
-                            Save
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <label
-                    htmlFor="save-modal"
+                  <button
+                    onClick={handleSave}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
                       textTransform: "none",
@@ -572,7 +433,7 @@ export default function Application({ appref }) {
                     }}
                   >
                     Save
-                  </label>
+                  </button>
                 </div>
               ) : (
                 <div className="p-1">
@@ -590,7 +451,7 @@ export default function Application({ appref }) {
                 </div>
               )}
 
-              {ref == "new" ? null : (
+              {id == "new" ? null : (
                 <div className="p-1">
                   <input
                     type="checkbox"
@@ -648,11 +509,11 @@ export default function Application({ appref }) {
                   </label>
                 </div>
               )}
-              {ref == "new" ? null : (
+              {id == "new" ? null : (
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("start", ref, version);
+                      handleAction("start", id);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -665,11 +526,11 @@ export default function Application({ appref }) {
                   </button>
                 </div>
               )}
-              {ref == "new" ? null : (
+              {id == "new" ? null : (
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("stop", ref, version);
+                      handleAction("stop", id);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -682,11 +543,11 @@ export default function Application({ appref }) {
                   </button>
                 </div>
               )}
-              {ref == "new" ? null : (
+              {id == "new" ? null : (
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("restart", ref, version);
+                      handleAction("restart", id);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -697,76 +558,6 @@ export default function Application({ appref }) {
                   >
                     Restart
                   </button>
-                </div>
-              )}
-              {ref == "new" ? null : (
-                <div className="p-1">
-                  <input
-                    type="checkbox"
-                    id="deploy-modal"
-                    className="modal-toggle"
-                  />
-                  <div className="modal">
-                    <div className="modal-box">
-                      <div className="p-2">
-                        <div className="mb-2" style={{ fontSize: 14 }}>
-                          Version
-                        </div>
-                        <input
-                          value={newVersion}
-                          onChange={(e) => setNewVersion(e.target.value)}
-                          type="text"
-                          className="input input-bordered w-full rounded-xl"
-                        />
-                      </div>
-                      <div className="modal-action justify-between">
-                        <div className="p-1">
-                          <label
-                            onClick={() => {
-                              setNewVersion("");
-                            }}
-                            htmlFor="deploy-modal"
-                            className="btn btn-outline w-28 rounded-3xl"
-                            style={{
-                              textTransform: "none",
-                              // background: "#02b602",
-                              // borderColor: "#02b602",
-                            }}
-                          >
-                            Cancel
-                          </label>
-                        </div>
-                        <div className="p-1">
-                          <label
-                            onClick={() =>
-                              handleAction("deploy", ref, newVersion)
-                            }
-                            htmlFor="deploy-modal"
-                            className="btn text-white w-28 rounded-3xl"
-                            style={{
-                              textTransform: "none",
-                              background: "#EA4C89",
-                              borderColor: "#EA4C89",
-                            }}
-                          >
-                            Deploy
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <label
-                    htmlFor="deploy-modal"
-                    className="btn text-white w-36 rounded-3xl"
-                    style={{
-                      textTransform: "none",
-                      background: "#EA4C89",
-                      borderColor: "#EA4C89",
-                    }}
-                  >
-                    Deploy
-                  </label>
                 </div>
               )}
             </div>
@@ -787,26 +578,20 @@ export default function Application({ appref }) {
                 <div className="mb-2" style={{ fontSize: 14 }}>
                   Base Image
                 </div>
-                <select
-                  value={deployment}
-                  onChange={(e) => setDeployment(e.target.value)}
-                  className="select select-bordered w-full outline-none rounded-xl"
-                  style={{ fontSize: 14, borderWidth: 1 }}
-                >
-                  {deployments.map((d) => (
-                    <option key={d.key} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  value={image}
+                  onChange={(e) => setImage(e.target.value)}
+                  type="text"
+                  className="input input-bordered w-full rounded-xl"
+                />
               </div>
-              <div className="p-2 w-1/6">
+              <div className="p-2 w-1/4">
                 <div className="mb-2" style={{ fontSize: 14 }}>
-                  Network
+                  Tag
                 </div>
                 <input
-                  value={network}
-                  onChange={(e) => setNetwork(e.target.value)}
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
                   type="text"
                   className="input input-bordered w-full rounded-xl"
                 />
@@ -835,16 +620,13 @@ export default function Application({ appref }) {
                   className="input input-bordered w-full rounded-xl"
                 />
               </div>
-            </div>
-            <hr />
-            <div className="flex flex-wrap mb-3 w-1/2">
-              <div className="p-2 flex-grow">
+              <div className="p-2 w-1/6">
                 <div className="mb-2" style={{ fontSize: 14 }}>
-                  Git
+                  Network
                 </div>
                 <input
-                  value={git}
-                  onChange={(e) => setGit(e.target.value)}
+                  value={network}
+                  onChange={(e) => setNetwork(e.target.value)}
                   type="text"
                   className="input input-bordered w-full rounded-xl"
                 />
@@ -852,7 +634,7 @@ export default function Application({ appref }) {
             </div>
             <hr />
             <h1 className="px-2 mt-3" style={{ fontSize: 14 }}>
-              Application Config
+              Container Config
             </h1>
             {environments.map((environment, i) => (
               <div key={i} className="flex flex-wrap">
@@ -1025,47 +807,6 @@ export default function Application({ appref }) {
             ))}
           </div>
         ) : null}
-        {activeMenu == "version" ? (
-          <div
-            style={{ fontSize: 13 }}
-            className="bg-white rounded-xl shadow-lg overflow-auto raised-rounded-card"
-          >
-            <table className="w-full h-full table">
-              <thead className="font-bold" style={{ fontSize: 14 }}>
-                <tr>
-                  <th className="text-center">#</th>
-                  <th className="text-left">Version</th>
-                  <th className="text-left">Time</th>
-                  <th className="text-left">Active</th>
-                  {/* <th></th> */}
-                </tr>
-              </thead>
-              <tbody>
-                {versions.map((v, i) => (
-                  <tr key={v._id}>
-                    <td className="text-center">{i + 1}</td>
-                    <td>{v.version}</td>
-                    <td>{moment(v.createdAt).fromNow()}</td>
-                    <td>{v.version == version ? "Yes" : "No"}</td>
-                    {/* <td>
-                      <button
-                        className="btn"
-                        style={{
-                          borderRadius: "2rem",
-                          textTransform: "none",
-                          background: "#0285FF",
-                          borderColor: "#0285FF",
-                        }}
-                      >
-                        Change Version
-                      </button>
-                    </td> */}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
         {activeMenu == "log" ? (
           <div
             className="card-body bg-black text-white rounded-xl overflow-y-auto"
@@ -1082,7 +823,7 @@ export default function Application({ appref }) {
 export async function getServerSideProps(context) {
   return {
     props: {
-      appref: context.query.ref,
+      cid: context.query.id,
     }, // will be passed to the page component as props
   };
 }
