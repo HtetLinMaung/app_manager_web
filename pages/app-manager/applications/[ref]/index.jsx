@@ -132,13 +132,18 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    setDeployments(
-      response.data.data.map((d) => ({
+    setDeployments([
+      {
+        key: "-",
+        value: "-",
+        label: "-",
+      },
+      ...response.data.data.map((d) => ({
         key: d._id,
         value: d._id,
         label: `${d.name} (${d.version})`,
-      }))
-    );
+      })),
+    ]);
     if (response.data.data.length) {
       setDeployment(response.data.data[0]._id);
     }
@@ -243,7 +248,7 @@ export default function Application({ appref }) {
         version,
         git,
         port: `${exposePort}:${containerPort}`,
-        deployment,
+        deployment: deployment == "-" ? null : deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -291,7 +296,7 @@ export default function Application({ appref }) {
         name,
         git,
         port: `${exposePort}:${containerPort}`,
-        deployment,
+        deployment: deployment == "-" ? null : deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -420,32 +425,36 @@ export default function Application({ appref }) {
           >
             Overview
           </button>
-          <button
-            onClick={() => setActiveMenu("version")}
-            className="btn w-28"
-            style={{
-              borderRadius: "2rem",
-              textTransform: "none",
-              background: activeMenu == "version" ? "#0285FF" : "#ffffff",
-              borderColor: activeMenu == "version" ? "#0285FF" : "#ffffff",
-              color: activeMenu == "version" ? "#ffffff" : "#000000",
-            }}
-          >
-            Versions
-          </button>
-          <button
-            onClick={() => setActiveMenu("log")}
-            className="btn w-28"
-            style={{
-              borderRadius: "2rem",
-              textTransform: "none",
-              background: activeMenu == "log" ? "#0285FF" : "#ffffff",
-              borderColor: activeMenu == "log" ? "#0285FF" : "#ffffff",
-              color: activeMenu == "log" ? "#ffffff" : "#000000",
-            }}
-          >
-            Logs
-          </button>
+          {ref == "new" ? null : (
+            <button
+              onClick={() => setActiveMenu("version")}
+              className="btn w-28"
+              style={{
+                borderRadius: "2rem",
+                textTransform: "none",
+                background: activeMenu == "version" ? "#0285FF" : "#ffffff",
+                borderColor: activeMenu == "version" ? "#0285FF" : "#ffffff",
+                color: activeMenu == "version" ? "#ffffff" : "#000000",
+              }}
+            >
+              Versions
+            </button>
+          )}
+          {ref == "new" ? null : (
+            <button
+              onClick={() => setActiveMenu("log")}
+              className="btn w-28"
+              style={{
+                borderRadius: "2rem",
+                textTransform: "none",
+                background: activeMenu == "log" ? "#0285FF" : "#ffffff",
+                borderColor: activeMenu == "log" ? "#0285FF" : "#ffffff",
+                color: activeMenu == "log" ? "#ffffff" : "#000000",
+              }}
+            >
+              Logs
+            </button>
+          )}
         </div>
         <div className="flex">
           {versions.length ? (
