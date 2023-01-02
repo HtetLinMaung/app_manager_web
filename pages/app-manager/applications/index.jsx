@@ -41,6 +41,10 @@ export default function Application() {
       title: "Port",
     },
     {
+      key: "network",
+      title: "Network",
+    },
+    {
       key: "deploymentname",
       title: "Deployment",
     },
@@ -93,7 +97,7 @@ export default function Application() {
       params: {
         ...pagination,
         search,
-        populate: "deployment",
+        populate: JSON.stringify(["deployment", "container"]),
       },
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -114,6 +118,9 @@ export default function Application() {
       response.data.data.map((d) => ({
         ...d,
         // creatername: d.createdby.name,
+        network: d.container.network,
+        port: d.container.port,
+        status: d.container.status,
         deploymentname: d.deployment
           ? `${d.deployment.name}:${d.deployment.tag}`
           : "-",

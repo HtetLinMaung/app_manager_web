@@ -19,7 +19,7 @@ const reducer = (state, action) => {
     case "SET_STATE":
       return { ...state, ...action.payload };
     case "SET_LOG_ID":
-      return { ...state, logIds: { ...logIds, ...action.payload } };
+      return { ...state, logIds: { ...state.logIds, ...action.payload } };
     default:
       return state;
   }

@@ -4,7 +4,6 @@ import http from "starless-http";
 import Swal from "sweetalert2";
 import moment from "moment/moment";
 import BreadCrumb from "../../../../components/BreadCrumb";
-import Table from "../../../../components/Table";
 import { domain } from "../../../../constants";
 import { appContext } from "../../../../provider/AppProvider";
 
@@ -46,9 +45,10 @@ export default function Application({ appref }) {
   const [git, setGit] = useState("");
   const [containerPort, setContainerPort] = useState("");
   const [exposePort, setExposePort] = useState("");
-  const [deployment, setDeployment] = useState("-");
+  const [deployment, setDeployment] = useState("");
   const [environments, setEnvironments] = useState(defaultEnvironments);
   const [volumes, setVolumes] = useState(defaultVolumes);
+  const [network, setNetwork] = useState("");
   const [status, setStatus] = useState("new");
   const [deployments, setDeployments] = useState([]);
   const [versions, setVersions] = useState([]);
@@ -56,7 +56,6 @@ export default function Application({ appref }) {
   const [logs, setLogs] = useState("");
 
   const fetchLogs = async () => {
-    // dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(
       `${domain}/applications/${ref}/logs`,
       {
@@ -71,16 +70,18 @@ export default function Application({ appref }) {
         },
       }
     );
-    // dispatch({ type: "SET_STATE", payload: { loading: false } });
+
     if (err || response.status != 200) {
       if (response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
-      return Swal.fire({
-        icon: "error",
-        text: response.data ? response.data.message : "Something went wrong!",
-      });
+      setLogs("");
+      return false;
+      // return Swal.fire({
+      //   icon: "error",
+      //   text: response.data ? response.data.message : "Something went wrong!",
+      // });
     }
     setLogs(response.data.data);
   };
@@ -139,15 +140,21 @@ export default function Application({ appref }) {
         label: `${d.name} (${d.version})`,
       })),
     ]);
+    if (response.data.data.length) {
+      setDeployment(response.data.data[0]._id);
+    }
   };
 
-  const fetchData = async () => {
+  const fetchData = async (r = null) => {
     dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.get(`${domain}/applications/${appref}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+    const [response, err] = await http.get(
+      `${domain}/applications/${r || appref}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
       if (response.status == 401) {
@@ -159,18 +166,24 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    const {
-      ref,
-      name,
-      version,
-      git,
-      port,
-      deployment,
-      volumes,
-      environments,
-      status,
-    } = response.data.data;
+    const { ref, name, version, git, deployment } = response.data.data;
+    const { port, volumes, environments, status, network } =
+      response.data.container;
     setRef(ref);
+    setBItems([
+      {
+        label: "Dashboard",
+        to: "/app-manager",
+      },
+      {
+        label: "Application",
+        to: "/app-manager/applications",
+      },
+      {
+        label: name,
+        to: `/app-manager/applications/${ref}`,
+      },
+    ]);
     setName(name);
     setVersion(version);
     setGit(git);
@@ -197,6 +210,7 @@ export default function Application({ appref }) {
         : defaultEnvironments
     );
     setStatus(status);
+    setNetwork(network);
     setVersions(response.data.versions);
   };
 
@@ -206,12 +220,27 @@ export default function Application({ appref }) {
       fetchData();
     } else {
       setRef(appref);
+      setBItems([
+        {
+          label: "Dashboard",
+          to: "/app-manager",
+        },
+        {
+          label: "Application",
+          to: "/app-manager/applications",
+        },
+        {
+          label: "New Application",
+          to: `/app-manager/applications/${appref}`,
+        },
+      ]);
       setName("");
       setVersion("");
       setGit("");
       setExposePort("");
       setContainerPort("");
       setDeployment("");
+      setNetwork("");
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
@@ -245,6 +274,7 @@ export default function Application({ appref }) {
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
           .map(({ source, destination }) => `${source}:${destination}`),
+        network,
       },
       {
         headers: {
@@ -268,6 +298,7 @@ export default function Application({ appref }) {
       text: response.data.message,
     });
     setRef(response.data.data.ref);
+    await handleAction("deploy", response.data.data.ref, version);
     router.push(`/app-manager/applications/${response.data.data.ref}`);
   };
 
@@ -293,6 +324,7 @@ export default function Application({ appref }) {
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
           .map(({ source, destination }) => `${source}:${destination}`),
+        network,
       },
       {
         headers: {
@@ -316,7 +348,7 @@ export default function Application({ appref }) {
       icon: "success",
       text: response.data.message,
     });
-    fetchData();
+    fetchData(ref);
   };
 
   const handleDelete = async () => {
@@ -348,17 +380,17 @@ export default function Application({ appref }) {
     router.push("/app-manager/applications");
   };
 
-  const handleAction = async (action, v = null) => {
+  const handleAction = async (action, r = null, v = null) => {
     setNewVersion("");
     if (state.loading) {
       return false;
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(
-      `${domain}/applications/${ref}/${action}`,
+      `${domain}/applications/${r || ref}/${action}`,
       {
         params: {
-          version: action == "deploy" ? newVersion : v || version,
+          version: v || version,
         },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -381,7 +413,7 @@ export default function Application({ appref }) {
       text: response.data.message,
     });
 
-    fetchData();
+    fetchData(r);
   };
 
   const getStatusColor = (status) => {
@@ -456,7 +488,7 @@ export default function Application({ appref }) {
                 onChange={(e) => {
                   setVersion(e.target.value);
 
-                  handleAction("change-version", e.target.value);
+                  handleAction("change-version", ref, e.target.value);
                 }}
                 className="select w-full outline-none rounded-xl shadow-lg"
                 style={{ fontSize: 14, borderWidth: 1 }}
@@ -624,7 +656,7 @@ export default function Application({ appref }) {
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("start");
+                      handleAction("start", ref, version);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -641,7 +673,7 @@ export default function Application({ appref }) {
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("stop");
+                      handleAction("stop", ref, version);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -658,7 +690,7 @@ export default function Application({ appref }) {
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("restart");
+                      handleAction("restart", ref, version);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -710,7 +742,9 @@ export default function Application({ appref }) {
                         </div>
                         <div className="p-1">
                           <label
-                            onClick={() => handleAction("deploy")}
+                            onClick={() =>
+                              handleAction("deploy", ref, newVersion)
+                            }
                             htmlFor="deploy-modal"
                             className="btn text-white w-28 rounded-3xl"
                             style={{
@@ -770,6 +804,19 @@ export default function Application({ appref }) {
                   ))}
                 </select>
               </div>
+              <div className="p-2 w-1/6">
+                <div className="mb-2" style={{ fontSize: 14 }}>
+                  Network
+                </div>
+                <input
+                  value={network}
+                  onChange={(e) => setNetwork(e.target.value)}
+                  type="text"
+                  className="input input-bordered w-full rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap mb-3">
               <div className="p-2 w-1/6">
                 <div className="mb-2" style={{ fontSize: 14 }}>
                   Expose Port
@@ -895,6 +942,7 @@ export default function Application({ appref }) {
               </div>
             ))}
 
+            <hr />
             <h1 className="px-2 mt-3" style={{ fontSize: 14 }}>
               Volume Mapping
             </h1>
