@@ -16,7 +16,7 @@ import http from "starless-http";
 import { appContext } from "../../../provider/AppProvider";
 import { domain } from "../../../constants";
 
-export default function Application() {
+export default function Database() {
   const router = useRouter();
   const [state, dispatch] = useContext(appContext);
   const [isEdit, setIsEdit] = useState(false);
@@ -33,16 +33,16 @@ export default function Application() {
       title: "Name",
     },
     {
-      key: "version",
+      key: "image",
+      title: "Base Image",
+    },
+    {
+      key: "tag",
       title: "Version",
     },
     {
       key: "port",
       title: "Port",
-    },
-    {
-      key: "deploymentname",
-      title: "Deployment",
     },
     {
       key: "status",
@@ -76,24 +76,23 @@ export default function Application() {
     pagination.page,
     pagination.perpage,
     search,
-    state.sortItems["Application"],
+    state.sortItems["Database"],
   ]);
 
   //   useEffect(() => {
   //     const socket = getSocket();
-  //     socket.on("Application:create", fetchTableData);
-  //     socket.on("Application:update", fetchTableData);
-  //     socket.on("Application:delete", fetchTableData);
+  //     socket.on("Database:create", fetchTableData);
+  //     socket.on("Database:update", fetchTableData);
+  //     socket.on("Database:delete", fetchTableData);
   //   }, []);
 
   const fetchTableData = async () => {
     setTableData([]);
     dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.get(`${domain}/applications`, {
+    const [response, err] = await http.get(`${domain}/databases`, {
       params: {
         ...pagination,
         search,
-        populate: "deployment",
       },
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -114,9 +113,6 @@ export default function Application() {
       response.data.data.map((d) => ({
         ...d,
         // creatername: d.createdby.name,
-        deploymentname: d.deployment
-          ? `${d.deployment.name}:${d.deployment.tag}`
-          : "-",
         createdAt: moment(d.createdAt).format("DD/MM/YYYY, h:mm:ss a"),
       }))
     );
@@ -167,13 +163,13 @@ export default function Application() {
         onOverlayClick={sortModalOk}
       >
         <ul>
-          {state.sortItems["Application"].map((item) => (
+          {state.sortItems["Database"].map((item) => (
             <li key={item.key} className="flex items-center mb-3">
               <Checkbox
                 checked={item.checked}
                 onChange={(e) => {
                   const m = { ...state.sortItems };
-                  m["Application"] = m["Application"].map((si) =>
+                  m["Database"] = m["Database"].map((si) =>
                     si.key == item.key ? { ...si, checked: !si.checked } : si
                   );
                   dispatch({ type: "SET_STATE", payload: { sortItems: m } });
@@ -184,7 +180,7 @@ export default function Application() {
               <svg
                 onClick={() => {
                   const m = { ...state.sortItems };
-                  m["Application"] = m["Application"].map((si) =>
+                  m["Database"] = m["Database"].map((si) =>
                     si.key == item.key
                       ? { ...si, order: si.order == "asc" ? "desc" : "asc" }
                       : si
@@ -263,8 +259,8 @@ export default function Application() {
               to: "/app-manager",
             },
             {
-              label: "Application",
-              to: "/app-manager/applications",
+              label: "Database",
+              to: "/app-manager/databases",
             },
           ]}
         />
@@ -289,8 +285,8 @@ export default function Application() {
             onFilePicked={handleImport}
           />
         </div> */}
-        <Button onClick={() => router.push("/app-manager/applications/new")}>
-          Add Application
+        <Button onClick={() => router.push("/app-manager/databases/new")}>
+          Add Database
         </Button>
       </div>
       <div className="flex mb-5 items-center flex-wrap">
@@ -359,7 +355,7 @@ export default function Application() {
         items={tableData}
         hideAction
         totalCounts={totalCounts}
-        countLabel="Application"
+        countLabel="Database"
         colStyles={{
           ref: {
             cursor: "pointer",
@@ -370,7 +366,7 @@ export default function Application() {
         colEvents={{
           ref: {
             onClick: (e, item) => {
-              router.push(`/app-manager/applications/${item.ref}`);
+              router.push(`/app-manager/databases/${item.ref}`);
             },
           },
         }}
