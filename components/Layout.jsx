@@ -33,8 +33,8 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     if (!router.pathname.includes("/app-manager/applications")) {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["application"]) {
+        clearInterval(state.logIds["application"]);
       }
     }
   }, [router.pathname]);

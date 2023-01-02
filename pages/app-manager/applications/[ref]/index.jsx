@@ -46,7 +46,7 @@ export default function Application({ appref }) {
   const [git, setGit] = useState("");
   const [containerPort, setContainerPort] = useState("");
   const [exposePort, setExposePort] = useState("");
-  const [deployment, setDeployment] = useState("");
+  const [deployment, setDeployment] = useState("-");
   const [environments, setEnvironments] = useState(defaultEnvironments);
   const [volumes, setVolumes] = useState(defaultVolumes);
   const [status, setStatus] = useState("new");
@@ -89,21 +89,21 @@ export default function Application({ appref }) {
     if (activeMenu == "log") {
       fetchLogs();
       dispatch({
-        type: "SET_STATE",
+        type: "SET_LOG_ID",
         payload: {
-          logIntervalId: setInterval(() => {
+          application: setInterval(() => {
             fetchLogs();
           }, 5000),
         },
       });
     } else {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["application"]) {
+        clearInterval(state.logIds["application"]);
       }
     }
     return () => {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["application"]) {
+        clearInterval(state.logIds["application"]);
       }
     };
   }, [activeMenu]);
@@ -144,9 +144,6 @@ export default function Application({ appref }) {
         label: `${d.name} (${d.version})`,
       })),
     ]);
-    if (response.data.data.length) {
-      setDeployment(response.data.data[0]._id);
-    }
   };
 
   const fetchData = async () => {
@@ -219,13 +216,13 @@ export default function Application({ appref }) {
       setGit("");
       setExposePort("");
       setContainerPort("");
-      setDeployment("");
+      setDeployment("-");
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
     return () => {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["application"]) {
+        clearInterval(state.logIds["application"]);
       }
     };
   }, []);

@@ -22,7 +22,7 @@ const defaultVolumes = [
   },
 ];
 
-export default function Application({ appref }) {
+export default function Database({ appref }) {
   const [state, dispatch] = useContext(appContext);
   const router = useRouter();
   const [bItems, setBItems] = useState([
@@ -36,41 +36,39 @@ export default function Application({ appref }) {
     },
     {
       label: "New Database",
-      to: `/app-manager/applications/${appref}`,
+      to: `/app-manager/databases/${appref}`,
     },
   ]);
   const [ref, setRef] = useState(appref);
   const [name, setName] = useState("");
+  const [image, setImage] = useState("");
+  const [tag, setTag] = useState("");
   const [version, setVersion] = useState("");
   const [newVersion, setNewVersion] = useState("");
-  const [git, setGit] = useState("");
   const [containerPort, setContainerPort] = useState("");
   const [exposePort, setExposePort] = useState("");
-  const [deployment, setDeployment] = useState("");
+  const [databaseTemplate, setDatabaseTemplate] = useState("-");
   const [environments, setEnvironments] = useState(defaultEnvironments);
   const [volumes, setVolumes] = useState(defaultVolumes);
   const [status, setStatus] = useState("new");
-  const [deployments, setDeployments] = useState([]);
+  const [databaseTemplates, setDatabaseTemplates] = useState([]);
   const [versions, setVersions] = useState([]);
   const [activeMenu, setActiveMenu] = useState("overview");
   const [logs, setLogs] = useState("");
 
   const fetchLogs = async () => {
     // dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.get(
-      `${domain}/applications/${ref}/logs`,
-      {
-        params: {
-          projection: JSON.stringify({
-            name: 1,
-            version: 1,
-          }),
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
+    const [response, err] = await http.get(`${domain}/databases/${ref}/logs`, {
+      params: {
+        projection: JSON.stringify({
+          name: 1,
+          version: 1,
+        }),
+      },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     // dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
       if (response.status == 401) {
@@ -89,34 +87,28 @@ export default function Application({ appref }) {
     if (activeMenu == "log") {
       fetchLogs();
       dispatch({
-        type: "SET_STATE",
+        type: "SET_LOG_ID",
         payload: {
-          logIntervalId: setInterval(() => {
+          database: setInterval(() => {
             fetchLogs();
           }, 5000),
         },
       });
     } else {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["database"]) {
+        clearInterval(state.logIds["database"]);
       }
     }
     return () => {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["database"]) {
+        clearInterval(state.logIds["database"]);
       }
     };
   }, [activeMenu]);
 
-  const fetchDeployments = async () => {
+  const fetchDatabaseTemplates = async () => {
     dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.get(`${domain}/deployments`, {
-      params: {
-        projection: JSON.stringify({
-          name: 1,
-          version: 1,
-        }),
-      },
+    const [response, err] = await http.get(`${domain}/database-templates`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -132,26 +124,25 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    setDeployments([
+    setDatabaseTemplates([
       {
         key: "-",
         value: "-",
         label: "-",
+        data: {},
       },
       ...response.data.data.map((d) => ({
         key: d._id,
         value: d._id,
-        label: `${d.name} (${d.version})`,
+        label: d.name,
+        data: d,
       })),
     ]);
-    if (response.data.data.length) {
-      setDeployment(response.data.data[0]._id);
-    }
   };
 
   const fetchData = async () => {
     dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.get(`${domain}/applications/${appref}`, {
+    const [response, err] = await http.get(`${domain}/databases/${appref}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -167,21 +158,12 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    const {
-      ref,
-      name,
-      version,
-      git,
-      port,
-      deployment,
-      volumes,
-      environments,
-      status,
-    } = response.data.data;
+    const { ref, name, image, tag, port, volumes, environments, status } =
+      response.data.data;
     setRef(ref);
     setName(name);
-    setVersion(version);
-    setGit(git);
+    setImage(image);
+    setTag(tag);
     if (port) {
       const ports = port.split(":");
       if (ports.length > 1) {
@@ -189,8 +171,6 @@ export default function Application({ appref }) {
         setContainerPort(ports[1]);
       }
     }
-
-    setDeployment(deployment);
     setVolumes(
       volumes.length
         ? volumes.filter(volume).map((volume) => {
@@ -205,27 +185,26 @@ export default function Application({ appref }) {
         : defaultEnvironments
     );
     setStatus(status);
-    setVersions(response.data.versions);
   };
 
   useEffect(() => {
-    fetchDeployments();
+    fetchDatabaseTemplates();
     if (ref != "new") {
       fetchData();
     } else {
       setRef(appref);
       setName("");
-      setVersion("");
-      setGit("");
+      setImage("");
+      setTag("");
       setExposePort("");
       setContainerPort("");
-      setDeployment("");
+      setDatabaseTemplate("-");
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
     return () => {
-      if (state.logIntervalId) {
-        clearInterval(state.logIntervalId);
+      if (state.logIds["database"]) {
+        clearInterval(state.logIds["database"]);
       }
     };
   }, []);
@@ -242,13 +221,12 @@ export default function Application({ appref }) {
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.post(
-      `${domain}/applications`,
+      `${domain}/databases`,
       {
         name,
-        version,
-        git,
+        image,
+        tag,
         port: `${exposePort}:${containerPort}`,
-        deployment: deployment == "-" ? null : deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -276,7 +254,7 @@ export default function Application({ appref }) {
       text: response.data.message,
     });
     setRef(response.data.data.ref);
-    router.push(`/app-manager/applications/${response.data.data.ref}`);
+    router.push(`/app-manager/databases/${response.data.data.ref}`);
   };
 
   const handleUpdate = async () => {
@@ -294,9 +272,7 @@ export default function Application({ appref }) {
       `${domain}/applications/${ref}`,
       {
         name,
-        git,
         port: `${exposePort}:${containerPort}`,
-        deployment: deployment == "-" ? null : deployment,
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -332,7 +308,7 @@ export default function Application({ appref }) {
       return false;
     }
     dispatch({ type: "SET_STATE", payload: { loading: true } });
-    const [response, err] = await http.delete(`${domain}/applications/${ref}`, {
+    const [response, err] = await http.delete(`${domain}/databases/${ref}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -353,7 +329,7 @@ export default function Application({ appref }) {
       icon: "success",
       text: response.data.message,
     });
-    router.push("/app-manager/applications");
+    router.push("/app-manager/databases");
   };
 
   const handleAction = async (action, v = null) => {
@@ -366,7 +342,7 @@ export default function Application({ appref }) {
       `${domain}/applications/${ref}/${action}`,
       {
         params: {
-          version: action == "deploy" ? newVersion : v || version,
+          version: action == v || version,
         },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -767,7 +743,7 @@ export default function Application({ appref }) {
                 </div>
                 <select
                   value={deployment}
-                  onChange={(e) => setDeployment(e.target.value)}
+                  onChange={(e) => setDatabaseTemplate(e.target.value)}
                   className="select select-bordered w-full outline-none rounded-xl"
                   style={{ fontSize: 14, borderWidth: 1 }}
                 >
