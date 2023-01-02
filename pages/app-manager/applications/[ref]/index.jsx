@@ -56,7 +56,7 @@ export default function Application({ appref }) {
   const [logs, setLogs] = useState("");
 
   const fetchLogs = async () => {
-    dispatch({ type: "SET_STATE", payload: { loading: true } });
+    // dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(
       `${domain}/applications/${ref}/logs`,
       {
@@ -71,22 +71,41 @@ export default function Application({ appref }) {
         },
       }
     );
-    dispatch({ type: "SET_STATE", payload: { loading: false } });
+    // dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    console.log(response.data);
     setLogs(response.data.data);
   };
 
-  let logInterval = null;
   useEffect(() => {
     if (activeMenu == "log") {
       fetchLogs();
+      dispatch({
+        type: "SET_STATE",
+        payload: {
+          logIntervalId: setInterval(() => {
+            fetchLogs();
+          }, 5000),
+        },
+      });
+    } else {
+      if (state.logIntervalId) {
+        clearInterval(state.logIntervalId);
+      }
     }
+    return () => {
+      if (state.logIntervalId) {
+        clearInterval(state.logIntervalId);
+      }
+    };
   }, [activeMenu]);
 
   const fetchDeployments = async () => {
@@ -104,6 +123,10 @@ export default function Application({ appref }) {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -130,6 +153,10 @@ export default function Application({ appref }) {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -191,6 +218,11 @@ export default function Application({ appref }) {
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
+    return () => {
+      if (state.logIntervalId) {
+        clearInterval(state.logIntervalId);
+      }
+    };
   }, []);
 
   const handleSave = async () => {
@@ -225,6 +257,10 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 201) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -269,6 +305,10 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -295,6 +335,10 @@ export default function Application({ appref }) {
     dispatch({ type: "SET_STATE", payload: { loading: false } });
 
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -326,6 +370,10 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -974,7 +1022,10 @@ export default function Application({ appref }) {
           </div>
         ) : null}
         {activeMenu == "log" ? (
-          <div className="card-body bg-black text-white rounded-xl">
+          <div
+            className="card-body bg-black text-white rounded-xl overflow-y-auto"
+            style={{ height: 600 }}
+          >
             <pre className="text-white text-xl">{logs}</pre>
           </div>
         ) : null}

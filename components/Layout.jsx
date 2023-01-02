@@ -31,6 +31,14 @@ export default function Layout({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (!router.pathname.includes("/app-manager/applications")) {
+      if (state.logIntervalId) {
+        clearInterval(state.logIntervalId);
+      }
+    }
+  }, [router.pathname]);
+
   return (
     <div className="flex">
       {/* <nav

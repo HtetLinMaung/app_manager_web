@@ -10,6 +10,7 @@ const initialState = {
   sortItems: { ...map },
   loading: false,
   token: "",
+  logIntervalId: null,
 };
 
 const reducer = (state, action) => {

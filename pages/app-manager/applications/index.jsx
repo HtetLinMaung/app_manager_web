@@ -101,6 +101,10 @@ export default function Application() {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
+      if (response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
       return Swal.fire({
         icon: "error",
         text: response.data ? response.data.message : "Something went wrong!",
@@ -110,6 +114,7 @@ export default function Application() {
       response.data.data.map((d) => ({
         ...d,
         // creatername: d.createdby.name,
+        deploymentname: `${d.deployment.name}:${d.deployment.tag}`,
         createdAt: moment(d.createdAt).format("DD/MM/YYYY, h:mm:ss a"),
       }))
     );
