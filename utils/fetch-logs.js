@@ -2,12 +2,6 @@ import http from "starless-http";
 import { domain } from "../constants";
 
 export default async function fetchLogs(router, dispatch, id, action = "logs") {
-  dispatch({
-    type: "SET_CONTAINER_ID",
-    payload: {
-      [id]: "",
-    },
-  });
   const [response, err] = await http.get(
     `${domain}/containers/${id}/${action}`,
     {

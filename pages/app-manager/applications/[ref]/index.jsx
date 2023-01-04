@@ -366,11 +366,17 @@ export default function Application({ appref }) {
   };
 
   const handleAction = async (action, r = null, v = null) => {
+    if (action == "deploy") {
+      setStatus("deploy");
+    }
     setNewVersion("");
     if (state.loading) {
       return false;
     }
-    dispatch({ type: "SET_STATE", payload: { loading: true } });
+    dispatch({
+      type: "SET_STATE",
+      payload: { loading: action == "deploy" ? false : true },
+    });
     const [response, err] = await http.get(
       `${domain}/applications/${r || ref}/${action}`,
       {
@@ -496,7 +502,7 @@ export default function Application({ appref }) {
         </div>
       </div>
       <div className="card shadow-xl bg-white">
-        {activeMenu == "overview" ? (
+        {activeMenu == "overview" && status != "deploy" ? (
           <div className="card-body">
             <div className="flex mb-3">
               {ref == "new" ? (
@@ -1014,6 +1020,15 @@ export default function Application({ appref }) {
             ))}
           </div>
         ) : null}
+        {activeMenu == "overview" && status == "deploy" ? (
+          <div
+            id={`deploy_${containerId}`}
+            className="card-body bg-black text-white rounded-xl overflow-y-auto"
+            style={{ height: 600 }}
+          >
+            <pre className="text-white text-xl"></pre>
+          </div>
+        ) : null}
         {activeMenu == "version" ? (
           <div
             style={{ fontSize: 13 }}
@@ -1057,12 +1072,11 @@ export default function Application({ appref }) {
         ) : null}
         {activeMenu == "log" ? (
           <div
+            id={`log_${containerId}`}
             className="card-body bg-black text-white rounded-xl overflow-y-auto"
             style={{ height: 600 }}
           >
-            <pre className="text-white text-xl">
-              {state.containerIds[containerId]}
-            </pre>
+            <pre className="text-white text-xl"></pre>
           </div>
         ) : null}
       </div>

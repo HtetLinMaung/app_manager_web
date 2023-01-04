@@ -15,19 +15,53 @@ export default function Layout({ children }) {
       const socket = getSocket();
       socket.on("connect", () => {
         console.log("Socket IO connected.");
-        socket.on("logs", ({ containerId, stdout, stderr }) => {
-          console.log("logs event trigger.");
-          let logs = state.containerIds[containerId] || "";
-          if (stdout) {
-            logs += stdout;
+        socket.on("deploy", ({ containerId, stdout, stderr, error }) => {
+          try {
+            const element = document.querySelector(
+              `#deploy_${containerId} pre`
+            );
+
+            if (element) {
+              if (stdout) {
+                element.innerHTML += stdout;
+              }
+              if (stderr) {
+                element.innerHTML += stderr;
+              }
+              if (error) {
+                element.innerHTML += error;
+              }
+            }
+            const parent = document.getElementById(`deploy_${containerId}`);
+            if (parent) {
+              parent.scrollTop = parent.scrollHeight;
+            }
+          } catch (err) {
+            console.error(err);
           }
-          if (stderr) {
-            logs += stderr;
+        });
+        socket.on("logs", ({ containerId, stdout, stderr, error }) => {
+          try {
+            const element = document.querySelector(`#log_${containerId} pre`);
+
+            if (element) {
+              if (stdout) {
+                element.innerHTML += stdout;
+              }
+              if (stderr) {
+                element.innerHTML += stderr;
+              }
+              if (error) {
+                element.innerHTML += error;
+              }
+            }
+            const parent = document.getElementById(`log_${containerId}`);
+            if (parent) {
+              parent.scrollTop = parent.scrollHeight;
+            }
+          } catch (err) {
+            console.error(err);
           }
-          dispatch({
-            type: "SET_CONTAINER_ID",
-            payload: { [containerId]: logs },
-          });
         });
       });
       socket.on("disconnect", () => {
@@ -48,13 +82,16 @@ export default function Layout({ children }) {
     }
   }, []);
 
-  useEffect(() => {
-    if (!router.pathname.includes("/app-manager/containers")) {
-      for (const [containerId, logs] of Object.entries(state.containerIds)) {
-        fetchLogs(router, dispatch, containerId, "cancel-logs-stream");
-      }
-    }
-  }, [router.pathname]);
+  // useEffect(() => {
+  //   if (
+  //     !router.pathname.includes("/app-manager/containers") &&
+  //     !router.pathname.includes("/app-manager/applications")
+  //   ) {
+  //     for (const [containerId, logs] of Object.entries(state.containerIds)) {
+  //       fetchLogs(router, dispatch, containerId, "cancel-logs-stream");
+  //     }
+  //   }
+  // }, [router.pathname]);
 
   return (
     <div className="flex">

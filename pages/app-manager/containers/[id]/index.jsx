@@ -22,7 +22,6 @@ const defaultVolumes = [
 ];
 
 export default function Container({ cid }) {
-  console.log(cid);
   const [state, dispatch] = useContext(appContext);
   const router = useRouter();
   const [bItems, setBItems] = useState([
@@ -775,10 +774,11 @@ export default function Container({ cid }) {
         ) : null}
         {activeMenu == "log" ? (
           <div
+            id={`log_${id}`}
             className="log-view card-body bg-black text-white rounded-xl overflow-y-auto"
             style={{ height: 600 }}
           >
-            <pre className="text-white text-xl">{state.containerIds[id]}</pre>
+            <pre className="text-white text-xl"></pre>
           </div>
         ) : null}
       </div>
