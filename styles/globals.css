@@ -173,3 +173,7 @@ nav svg:hover {
 svg:active {
   transform: translateY(0px);
 }
+
+.log-view {
+  transition: all 0.3s;
+}

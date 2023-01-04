@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useContext } from "react";
 import { appContext } from "../provider/AppProvider";
+import { disconnectSocket } from "../utils/socket";
 
 export default function SideBar() {
   const [state, dispatch] = useContext(appContext);
@@ -76,12 +77,46 @@ export default function SideBar() {
             />
           </svg>
         </li>
+
+        <li className="flex justify-center mr-10 md:mr-0 md:mb-10">
+          <svg
+            onClick={() => router.push("/app-manager/containers")}
+            style={{
+              width: "1.8rem",
+              color: router.pathname.includes("/app-manager/containers")
+                ? "#0285FF"
+                : "#9A999B",
+            }}
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <g clipPath="url(#clip0_324_2)">
+              <path
+                d="M13.152 0.681999C13.4964 0.481074 13.8879 0.375198 14.2865 0.375198C14.6852 0.375198 15.0767 0.481074 15.421 0.681999L15.428 0.685999L22.385 4.962C22.7277 5.16274 23.0119 5.44962 23.2094 5.79415C23.4069 6.13867 23.5109 6.52887 23.511 6.926V14.442C23.511 15.252 23.079 16.002 22.378 16.41L22.376 16.411L10.412 23.448L10.408 23.451C9.70202 23.861 8.83002 23.861 8.12402 23.451L8.09802 23.436L1.59502 18.934C1.2604 18.732 0.983651 18.447 0.791622 18.1066C0.599593 17.7661 0.498802 17.3819 0.499024 16.991V9.438C0.499024 9.046 0.599024 8.668 0.783024 8.338L0.786024 8.332L0.800024 8.306C0.997024 7.964 1.28002 7.679 1.62002 7.479H1.62202L13.152 0.680999V0.681999ZM13.909 1.977H13.908L2.64802 8.616L8.89602 12.863C9.01265 12.9264 9.1436 12.9588 9.27633 12.957C9.40906 12.9553 9.53911 12.9194 9.65402 12.853H9.65502L21.288 6.049L14.659 1.975C14.5447 1.90963 14.4153 1.87549 14.2836 1.87602C14.152 1.87654 14.0228 1.91172 13.909 1.978V1.977ZM8.51702 14.33C8.38063 14.2825 8.24904 14.2223 8.12402 14.15L8.10102 14.136L1.99902 9.989V16.992C1.99902 17.267 2.14402 17.52 2.37802 17.656L2.40302 17.67L8.51702 21.902V14.33ZM18 9.709L14.75 11.609V19.157L18 17.245V9.709ZM10.41 14.147L10.408 14.149C10.2836 14.2211 10.1527 14.2814 10.017 14.329V21.941L13.25 20.039V12.487L10.41 14.147ZM19.5 8.831V16.363L21.624 15.113C21.7417 15.0449 21.8393 14.947 21.9072 14.8292C21.9752 14.7115 22.0109 14.5779 22.011 14.442V7.363L19.5 8.831Z"
+                fill={
+                  router.pathname.includes("/app-manager/containers")
+                    ? "#0285FF"
+                    : "#9A999B"
+                }
+              />
+            </g>
+            <defs>
+              <clipPath id="clip0_324_2">
+                <rect width="24" height="24" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
+        </li>
+
         <li className="flex-grow"></li>
         <li className="flex justify-center items-center" title="Logout">
           <svg
             onClick={() => {
               localStorage.setItem("token", "");
-              // disconnectSocket();
+              disconnectSocket();
               router.push("/app-manager/login");
             }}
             style={{

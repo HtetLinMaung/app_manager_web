@@ -2,10 +2,10 @@ import { useRouter } from "next/router";
 import { useContext, useEffect, useState } from "react";
 import http from "starless-http";
 import Swal from "sweetalert2";
-import moment from "moment/moment";
 import BreadCrumb from "../../../../components/BreadCrumb";
 import { domain } from "../../../../constants";
 import { appContext } from "../../../../provider/AppProvider";
+import fetchLogs from "../../../../utils/fetch-logs";
 
 const defaultEnvironments = [
   {
@@ -22,6 +22,7 @@ const defaultVolumes = [
 ];
 
 export default function Container({ cid }) {
+  console.log(cid);
   const [state, dispatch] = useContext(appContext);
   const router = useRouter();
   const [bItems, setBItems] = useState([
@@ -46,54 +47,24 @@ export default function Container({ cid }) {
   const [network, setNetwork] = useState("");
   const [status, setStatus] = useState("new");
   const [activeMenu, setActiveMenu] = useState("overview");
-  const [logs, setLogs] = useState("");
+
   const [image, setImage] = useState("");
   const [tag, setTag] = useState("");
   const [id, setId] = useState(cid);
 
-  const fetchLogs = async () => {
-    const [response, err] = await http.get(`${domain}/containers/${id}/logs`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
-
-    if (err || response.status != 200) {
-      if (response.status == 401) {
-        localStorage.setItem("token", "");
-        return router.push("/app-manager/login");
-      }
-      setLogs("");
-      return false;
-      // return Swal.fire({
-      //   icon: "error",
-      //   text: response.data ? response.data.message : "Something went wrong!",
-      // });
-    }
-    setLogs(response.data.data);
-  };
+  // useEffect(() => {
+  //   const logView = document.querySelector(".log-view");
+  //   if (logView) {
+  //     logView.scrollTop = logView.scrollHeight;
+  //   }
+  // }, [logs]);
 
   useEffect(() => {
     if (activeMenu == "log") {
-      fetchLogs();
-      dispatch({
-        type: "SET_LOG_ID",
-        payload: {
-          container: setInterval(() => {
-            fetchLogs();
-          }, 5000),
-        },
-      });
+      fetchLogs(router, dispatch, id);
     } else {
-      if (state.logIds["container"]) {
-        clearInterval(state.logIds["container"]);
-      }
+      fetchLogs(router, dispatch, id, "cancel-logs-stream");
     }
-    return () => {
-      if (state.logIds["container"]) {
-        clearInterval(state.logIds["container"]);
-      }
-    };
   }, [activeMenu]);
 
   const fetchData = async (_id = null) => {
@@ -108,7 +79,7 @@ export default function Container({ cid }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -166,10 +137,10 @@ export default function Container({ cid }) {
   };
 
   useEffect(() => {
+    setId(cid);
     if (id != "new") {
-      fetchData();
+      fetchData(cid);
     } else {
-      setId(cid);
       setBItems([
         {
           label: "Dashboard",
@@ -193,11 +164,6 @@ export default function Container({ cid }) {
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
-    return () => {
-      if (state.logIds["container"]) {
-        clearInterval(state.logIds["container"]);
-      }
-    };
   }, []);
 
   const handleSave = async () => {
@@ -232,7 +198,7 @@ export default function Container({ cid }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 201) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -281,7 +247,7 @@ export default function Container({ cid }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -311,7 +277,7 @@ export default function Container({ cid }) {
     dispatch({ type: "SET_STATE", payload: { loading: false } });
 
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -342,7 +308,7 @@ export default function Container({ cid }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -809,10 +775,10 @@ export default function Container({ cid }) {
         ) : null}
         {activeMenu == "log" ? (
           <div
-            className="card-body bg-black text-white rounded-xl overflow-y-auto"
+            className="log-view card-body bg-black text-white rounded-xl overflow-y-auto"
             style={{ height: 600 }}
           >
-            <pre className="text-white text-xl">{logs}</pre>
+            <pre className="text-white text-xl">{state.containerIds[id]}</pre>
           </div>
         ) : null}
       </div>

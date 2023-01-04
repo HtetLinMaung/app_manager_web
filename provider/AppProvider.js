@@ -12,15 +12,18 @@ const initialState = {
   sortItems: { ...map },
   loading: false,
   token: "",
-  logIds: {},
+  containerIds: {},
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
     case "SET_STATE":
       return { ...state, ...action.payload };
-    case "SET_LOG_ID":
-      return { ...state, logIds: { ...state.logIds, ...action.payload } };
+    case "SET_CONTAINER_ID":
+      return {
+        ...state,
+        containerIds: { ...state.containerIds, ...action.payload },
+      };
     default:
       return state;
   }

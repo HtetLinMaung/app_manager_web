@@ -92,7 +92,7 @@ export default function Container() {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }

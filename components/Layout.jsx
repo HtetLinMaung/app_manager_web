@@ -3,10 +3,38 @@ import { useContext, useEffect } from "react";
 import ReactLoading from "react-loading";
 import { appContext } from "../provider/AppProvider";
 import SideBar from "./SideBar";
+import { getSocket } from "../utils/socket";
+import fetchLogs from "../utils/fetch-logs";
 
 export default function Layout({ children }) {
   const router = useRouter();
   const [state, dispatch] = useContext(appContext);
+
+  useEffect(() => {
+    if (state.token) {
+      const socket = getSocket();
+      socket.on("connect", () => {
+        console.log("Socket IO connected.");
+        socket.on("logs", ({ containerId, stdout, stderr }) => {
+          console.log("logs event trigger.");
+          let logs = state.containerIds[containerId] || "";
+          if (stdout) {
+            logs += stdout;
+          }
+          if (stderr) {
+            logs += stderr;
+          }
+          dispatch({
+            type: "SET_CONTAINER_ID",
+            payload: { [containerId]: logs },
+          });
+        });
+      });
+      socket.on("disconnect", () => {
+        console.log("Socket IO disconnected.");
+      });
+    }
+  }, [state.token]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -15,26 +43,15 @@ export default function Layout({ children }) {
       if (router.pathname == "/app-manager/login") {
         router.push("/app-manager");
       }
-
-      // const socket = getSocket();
-      // socket.on("connect", () => {
-      //   console.log("connected");
-      //   socket.emit("subscribe", token);
-      //   socket.on("token:refresh", (token) => {
-      //     console.log(token);
-      //     dispatch({ type: "SET_STATE", payload: { token } });
-      //     localStorage.setItem("token", token);
-      //   });
-      // });
     } else {
       router.push("/app-manager/login");
     }
   }, []);
 
   useEffect(() => {
-    if (!router.pathname.includes("/app-manager/applications")) {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
+    if (!router.pathname.includes("/app-manager/containers")) {
+      for (const [containerId, logs] of Object.entries(state.containerIds)) {
+        fetchLogs(router, dispatch, containerId, "cancel-logs-stream");
       }
     }
   }, [router.pathname]);

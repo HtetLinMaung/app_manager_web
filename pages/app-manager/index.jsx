@@ -1,3 +1,18 @@
+import BreadCrumb from "../../components/BreadCrumb";
+
 export default function Home() {
-  return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
+  return (
+    <div className="p-10 md:ml-20 mb-20 m-0">
+      <div className="mb-5">
+        <BreadCrumb
+          items={[
+            {
+              label: "Dashboard",
+              to: "/app-manager",
+            },
+          ]}
+        />
+      </div>
+    </div>
+  );
 }

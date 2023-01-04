@@ -71,7 +71,7 @@ export default function Database({ appref }) {
     });
     // dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -106,6 +106,14 @@ export default function Database({ appref }) {
     };
   }, [activeMenu]);
 
+  useEffect(() => {
+    const logView = document.querySelector(".log-view");
+    console.log(logView);
+    if (logView) {
+      logView.scrollTop = logView.scrollHeight;
+    }
+  }, [logs]);
+
   const fetchDatabaseTemplates = async () => {
     dispatch({ type: "SET_STATE", payload: { loading: true } });
     const [response, err] = await http.get(`${domain}/database-templates`, {
@@ -115,7 +123,7 @@ export default function Database({ appref }) {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -149,7 +157,7 @@ export default function Database({ appref }) {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -240,7 +248,7 @@ export default function Database({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 201) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -286,7 +294,7 @@ export default function Database({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -316,7 +324,7 @@ export default function Database({ appref }) {
     dispatch({ type: "SET_STATE", payload: { loading: false } });
 
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -351,7 +359,7 @@ export default function Database({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -1008,7 +1016,7 @@ export default function Database({ appref }) {
         ) : null}
         {activeMenu == "log" ? (
           <div
-            className="card-body bg-black text-white rounded-xl overflow-y-auto"
+            className="card-body bg-black text-white rounded-xl overflow-y-auto log-view"
             style={{ height: 600 }}
           >
             <pre className="text-white text-xl">{logs}</pre>

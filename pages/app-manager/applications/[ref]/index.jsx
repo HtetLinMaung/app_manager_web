@@ -6,6 +6,7 @@ import moment from "moment/moment";
 import BreadCrumb from "../../../../components/BreadCrumb";
 import { domain } from "../../../../constants";
 import { appContext } from "../../../../provider/AppProvider";
+import fetchLogs from "../../../../utils/fetch-logs";
 
 const defaultEnvironments = [
   {
@@ -53,54 +54,14 @@ export default function Application({ appref }) {
   const [deployments, setDeployments] = useState([]);
   const [versions, setVersions] = useState([]);
   const [activeMenu, setActiveMenu] = useState("overview");
-  const [logs, setLogs] = useState("");
-
-  const fetchLogs = async () => {
-    const [response, err] = await http.get(
-      `${domain}/applications/${ref}/logs`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-
-    if (err || response.status != 200) {
-      if (response.status == 401) {
-        localStorage.setItem("token", "");
-        return router.push("/app-manager/login");
-      }
-      setLogs("");
-      return false;
-      // return Swal.fire({
-      //   icon: "error",
-      //   text: response.data ? response.data.message : "Something went wrong!",
-      // });
-    }
-    setLogs(response.data.data);
-  };
+  const [containerId, setContainerId] = useState("");
 
   useEffect(() => {
     if (activeMenu == "log") {
-      fetchLogs();
-      dispatch({
-        type: "SET_LOG_ID",
-        payload: {
-          application: setInterval(() => {
-            fetchLogs();
-          }, 5000),
-        },
-      });
+      fetchLogs(router, dispatch, containerId);
     } else {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
-      }
+      fetchLogs(router, dispatch, containerId, "cancel-logs-stream");
     }
-    return () => {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
-      }
-    };
   }, [activeMenu]);
 
   const fetchDeployments = async () => {
@@ -118,7 +79,7 @@ export default function Application({ appref }) {
     });
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -151,7 +112,7 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -161,8 +122,9 @@ export default function Application({ appref }) {
       });
     }
     const { ref, name, version, git, deployment } = response.data.data;
-    const { port, volumes, environments, status, network } =
+    const { port, volumes, environments, status, network, _id } =
       response.data.container;
+    setContainerId(_id);
     setRef(ref);
     setBItems([
       {
@@ -240,11 +202,6 @@ export default function Application({ appref }) {
       setEnvironments(defaultEnvironments);
       setVolumes(defaultVolumes);
     }
-    return () => {
-      if (state.logIds["application"]) {
-        clearInterval(state.logIds["application"]);
-      }
-    };
   }, []);
 
   const handleSave = async () => {
@@ -280,7 +237,7 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 201) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -330,7 +287,7 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -360,7 +317,7 @@ export default function Application({ appref }) {
     dispatch({ type: "SET_STATE", payload: { loading: false } });
 
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -374,6 +331,38 @@ export default function Application({ appref }) {
       text: response.data.message,
     });
     router.push("/app-manager/applications");
+  };
+
+  const handleContainerAction = async (action, cid, r) => {
+    if (state.loading) {
+      return false;
+    }
+    dispatch({ type: "SET_STATE", payload: { loading: true } });
+    const [response, err] = await http.get(
+      `${domain}/containers/${cid}/${action}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    dispatch({ type: "SET_STATE", payload: { loading: false } });
+    if (err || response.status != 200) {
+      if (err || response.status == 401) {
+        localStorage.setItem("token", "");
+        return router.push("/app-manager/login");
+      }
+      return Swal.fire({
+        icon: "error",
+        text: response.data ? response.data.message : "Something went wrong!",
+      });
+    }
+    await Swal.fire({
+      icon: "success",
+      text: response.data.message,
+    });
+
+    fetchData(r);
   };
 
   const handleAction = async (action, r = null, v = null) => {
@@ -395,7 +384,7 @@ export default function Application({ appref }) {
     );
     dispatch({ type: "SET_STATE", payload: { loading: false } });
     if (err || response.status != 200) {
-      if (response.status == 401) {
+      if (err || response.status == 401) {
         localStorage.setItem("token", "");
         return router.push("/app-manager/login");
       }
@@ -652,7 +641,7 @@ export default function Application({ appref }) {
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("start", ref, version);
+                      handleContainerAction("start", containerId, ref);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -669,7 +658,7 @@ export default function Application({ appref }) {
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("stop", ref, version);
+                      handleContainerAction("stop", containerId, ref);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -686,7 +675,7 @@ export default function Application({ appref }) {
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      handleAction("restart", ref, version);
+                      handleContainerAction("restart", containerId, ref);
                     }}
                     className="btn text-white w-36 rounded-3xl"
                     style={{
@@ -1071,7 +1060,9 @@ export default function Application({ appref }) {
             className="card-body bg-black text-white rounded-xl overflow-y-auto"
             style={{ height: 600 }}
           >
-            <pre className="text-white text-xl">{logs}</pre>
+            <pre className="text-white text-xl">
+              {state.containerIds[containerId]}
+            </pre>
           </div>
         ) : null}
       </div>
