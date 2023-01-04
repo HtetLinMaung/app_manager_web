@@ -6,6 +6,7 @@ const map = {
   Application: [],
   Container: [],
   Database: [],
+  Deployment: [],
 };
 
 const initialState = {

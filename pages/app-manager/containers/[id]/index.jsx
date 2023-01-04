@@ -51,13 +51,6 @@ export default function Container({ cid }) {
   const [tag, setTag] = useState("");
   const [id, setId] = useState(cid);
 
-  // useEffect(() => {
-  //   const logView = document.querySelector(".log-view");
-  //   if (logView) {
-  //     logView.scrollTop = logView.scrollHeight;
-  //   }
-  // }, [logs]);
-
   useEffect(() => {
     if (activeMenu == "log") {
       fetchLogs(router, dispatch, id);
