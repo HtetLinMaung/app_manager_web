@@ -44,6 +44,7 @@ export default function Application({ appref }) {
   const [version, setVersion] = useState("");
   const [newVersion, setNewVersion] = useState("");
   const [git, setGit] = useState("");
+  const [gitbranch, setGitBranch] = useState("");
   const [containerPort, setContainerPort] = useState("");
   const [exposePort, setExposePort] = useState("");
   const [deployment, setDeployment] = useState("");
@@ -121,7 +122,8 @@ export default function Application({ appref }) {
         text: response.data ? response.data.message : "Something went wrong!",
       });
     }
-    const { ref, name, version, git, deployment } = response.data.data;
+    const { ref, name, version, git, gitbranch, deployment } =
+      response.data.data;
     const { port, volumes, environments, status, network, _id } =
       response.data.container;
     setContainerId(_id);
@@ -143,6 +145,7 @@ export default function Application({ appref }) {
     setName(name);
     setVersion(version);
     setGit(git);
+    setGitBranch(gitbranch);
     if (port) {
       const ports = port.split(":");
       if (ports.length > 1) {
@@ -195,6 +198,7 @@ export default function Application({ appref }) {
       setName("");
       setVersion("");
       setGit("");
+      setGitBranch("");
       setExposePort("");
       setContainerPort("");
       setDeployment("");
@@ -221,6 +225,7 @@ export default function Application({ appref }) {
         name,
         version,
         git,
+        gitbranch,
         port:
           exposePort && containerPort ? `${exposePort}:${containerPort}` : "",
         deployment,
@@ -272,6 +277,7 @@ export default function Application({ appref }) {
       {
         name,
         git,
+        gitbranch,
         port:
           exposePort && containerPort ? `${exposePort}:${containerPort}` : "",
         deployment,
@@ -834,14 +840,25 @@ export default function Application({ appref }) {
               </div>
             </div>
             <hr />
-            <div className="flex flex-wrap mb-3 w-1/2">
-              <div className="p-2 flex-grow">
+            <div className="flex flex-wrap mb-3">
+              <div className="p-2 w-1/2">
                 <div className="mb-2" style={{ fontSize: 14 }}>
                   Git
                 </div>
                 <input
                   value={git}
                   onChange={(e) => setGit(e.target.value)}
+                  type="text"
+                  className="input input-bordered w-full rounded-xl"
+                />
+              </div>
+              <div className="p-2">
+                <div className="mb-2" style={{ fontSize: 14 }}>
+                  Branch
+                </div>
+                <input
+                  value={gitbranch}
+                  onChange={(e) => setGitBranch(e.target.value)}
                   type="text"
                   className="input input-bordered w-full rounded-xl"
                 />
