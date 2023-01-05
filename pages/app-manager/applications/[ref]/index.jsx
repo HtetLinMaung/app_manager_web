@@ -221,7 +221,8 @@ export default function Application({ appref }) {
         name,
         version,
         git,
-        port: `${exposePort}:${containerPort}`,
+        port:
+          exposePort && containerPort ? `${exposePort}:${containerPort}` : "",
         deployment,
         environments: bodyEnvironments,
         volumes: volumes
@@ -271,7 +272,8 @@ export default function Application({ appref }) {
       {
         name,
         git,
-        port: `${exposePort}:${containerPort}`,
+        port:
+          exposePort && containerPort ? `${exposePort}:${containerPort}` : "",
         deployment,
         environments: bodyEnvironments,
         volumes: volumes

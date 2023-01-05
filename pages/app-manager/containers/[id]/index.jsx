@@ -175,7 +175,8 @@ export default function Container({ cid }) {
         name,
         image,
         tag,
-        port: `${exposePort}:${containerPort}`,
+        port:
+          exposePort && containerPort ? `${exposePort}:${containerPort}` : "",
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
@@ -224,7 +225,8 @@ export default function Container({ cid }) {
         name,
         image,
         tag,
-        port: `${exposePort}:${containerPort}`,
+        port:
+          exposePort && containerPort ? `${exposePort}:${containerPort}` : "",
         environments: bodyEnvironments,
         volumes: volumes
           .filter(({ source, destination }) => source && destination)
