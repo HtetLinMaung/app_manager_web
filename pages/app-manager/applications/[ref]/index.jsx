@@ -512,7 +512,7 @@ export default function Application({ appref }) {
       <div className="card shadow-xl bg-white">
         {activeMenu == "overview" && status != "deploy" ? (
           <div className="card-body">
-            <div className="flex mb-3">
+            <div className="flex mb-3 flex-wrap">
               {ref == "new" ? (
                 <div className="p-1">
                   <input
@@ -770,6 +770,43 @@ export default function Application({ appref }) {
                   >
                     Deploy
                   </label>
+                </div>
+              )}
+              {ref == "new" ? null : (
+                <div className="dropdown">
+                  <label
+                    tabIndex={0}
+                    className="btn text-white w-36 rounded-3xl"
+                    style={{
+                      textTransform: "none",
+                      background: "#0285FF",
+                      borderColor: "#0285FF",
+                      marginTop: 3,
+                    }}
+                  >
+                    Export
+                  </label>
+                  <ul
+                    tabIndex={0}
+                    className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                  >
+                    <li>
+                      <a
+                        download
+                        href={`${domain}/applications/${ref}/export?type=docker-compose&token=${state.token}`}
+                      >
+                        Compose File
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        download
+                        href={`${domain}/applications/${ref}/export?type=tar&token=${state.token}`}
+                      >
+                        Tar File
+                      </a>
+                    </li>
+                  </ul>
                 </div>
               )}
             </div>
