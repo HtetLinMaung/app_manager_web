@@ -308,6 +308,23 @@ export default function Deployment({ depid }) {
                 </label>
               </div>
             )}
+            {id == "new" ? null : (
+              <div className="p-1">
+                <button
+                  onClick={() => {
+                    location.href = `${domain}/deployments/${id}/export?token=${state.token}`;
+                  }}
+                  className="btn text-white w-36 rounded-3xl"
+                  style={{
+                    textTransform: "none",
+                    background: "#0285FF",
+                    borderColor: "#0285FF",
+                  }}
+                >
+                  Export
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap mb-3">
             <div className="p-2 w-1/4">
