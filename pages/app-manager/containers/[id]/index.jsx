@@ -625,7 +625,7 @@ export default function Container({ cid }) {
                   />
                 </div>
                 <div className="p-2 flex items-center">
-                  {i == 0 ? (
+                  {i == environments.length - 1 ? (
                     <button
                       onClick={() => {
                         setEnvironments([
@@ -713,7 +713,7 @@ export default function Container({ cid }) {
                   />
                 </div>
                 <div className="p-2 flex items-center">
-                  {i == 0 ? (
+                  {i == volumes.length - 1 ? (
                     <button
                       onClick={() => {
                         setVolumes([

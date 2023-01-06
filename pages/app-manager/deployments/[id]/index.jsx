@@ -394,7 +394,7 @@ export default function Deployment({ depid }) {
                 />
               </div>
               <div className="p-2 flex items-center">
-                {i == 0 ? (
+                {i == buildSteps.length - 1 ? (
                   <button
                     onClick={() => {
                       setBuldSteps([...buildSteps, ""]);
