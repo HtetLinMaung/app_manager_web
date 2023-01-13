@@ -416,7 +416,7 @@ export default function Application({ appref }) {
   };
 
   const getStatusColor = (status) => {
-    if (status == "ready") {
+    if (status == "running") {
       return "#02b602";
     } else if (status == "stop") {
       return "#ff4135";

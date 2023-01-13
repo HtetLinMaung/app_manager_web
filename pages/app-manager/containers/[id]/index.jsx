@@ -55,7 +55,9 @@ export default function Container({ cid }) {
     if (activeMenu == "log") {
       fetchLogs(router, dispatch, id);
     } else {
-      fetchLogs(router, dispatch, id, "cancel-logs-stream");
+      if (id != "new") {
+        fetchLogs(router, dispatch, id, "cancel-logs-stream");
+      }
     }
   }, [activeMenu]);
 
@@ -320,7 +322,7 @@ export default function Container({ cid }) {
   };
 
   const getStatusColor = (status) => {
-    if (status == "ready") {
+    if (status == "running") {
       return "#02b602";
     } else if (status == "stop") {
       return "#ff4135";
