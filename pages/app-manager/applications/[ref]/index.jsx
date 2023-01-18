@@ -1079,7 +1079,7 @@ export default function Application({ appref }) {
         {activeMenu == "overview" && status == "deploy" ? (
           <div
             id={`deploy_${containerId}`}
-            className="card-body bg-black text-white rounded-xl overflow-y-auto"
+            className="log-view card-body bg-black text-white rounded-xl overflow-y-auto"
             style={{ height: 600 }}
           >
             <pre className="text-white text-xl"></pre>
