@@ -1129,7 +1129,7 @@ export default function Application({ appref }) {
         {activeMenu == "log" ? (
           <div
             id={`log_${containerId}`}
-            className="card-body bg-black text-white rounded-xl overflow-y-auto"
+            className="log-view card-body bg-black text-white rounded-xl overflow-y-auto"
             style={{ height: 600 }}
           >
             <pre className="text-white text-xl"></pre>
