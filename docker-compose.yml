@@ -1,0 +1,8 @@
+version: '3.9'
+
+services:
+  appmanagerweb:
+    image: htetlinmaung/app_manager_web
+    build: .
+    ports:
+      - "7071:3000"
